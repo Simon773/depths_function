@@ -1,0 +1,25 @@
+[project]
+name = "depths-function"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Simon773", email = "simus.simon@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "data-depth>=1.2.1.1",
+    "ipykernel>=7.3.0",
+    "notebook>=7.6.2",
+    "numpy>=2.5.3",
+    "pandas>=3.0.5",
+    "scikit-learn>=1.9.1",
+    "seaborn>=0.13.2",
+]
+
+[project.scripts]
+depths-function = "depths_function:main"
+
+[build-system]
+requires = ["uv_build>=0.12.15,<0.13.0"]
+build-backend = "uv_build"
