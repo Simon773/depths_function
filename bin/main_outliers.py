@@ -4,6 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import time
 
 racine_projet = Path(__file__).resolve().parent.parent
 if str(racine_projet) not in sys.path:
@@ -17,7 +18,7 @@ outlier_method = "CLOPD" #depth_function HBOS ABOD CBLOF
 choice_depth = "halfspace_depth"
 
 # Import des données 
-data = pd.read_csv(os.path.join(racine_projet, "data/SE_20160101.csv"), parse_dates=["date"])
+data = pd.read_csv(os.path.join(racine_projet, "data/data_station_selected.csv"), parse_dates=["date"])
 data = data[["number_sta", "lat", "lon", "date", "dd", "ff", "precip", "hu", "t"]]
 # On laisse de côté psl car trop de données manquantes
 print(f"Avant dropna : {len(data)}")
@@ -60,11 +61,15 @@ contamination = 0.02
 
 raw_scores = pd.DataFrame(index=data.index)
 binary_flags = pd.DataFrame(index=data.index)
+timings = pd.DataFrame(index=data.index)
 
 for name, info in methods.items():
     print(f"------- Calcul : {name}")
     try:
+        start = time.perf_counter()
         result = info["func"](X)
+        elapsed = time.perf_counter() - start
+        print(f"  -> Temps : {elapsed:.3f} s")
         raw_scores[name] = result
 
         if info["type"] == "score":
@@ -78,11 +83,13 @@ for name, info in methods.items():
                 if set(np.unique(result)) <= {-1, 1} \
                 else np.array(result).astype(int)
             p.plot_scores(result, 0.5, name)
+        timings[name] = elapsed
 
     except Exception as e:
         print(f"  -> ÉCHEC {name}: {e}")
         raw_scores[name] = np.nan
         binary_flags[name] = np.nan
+        timings[name] = np.nan
 
 # Score de consensus : combien de méthodes flaguent ce point comme outlier
 binary_flags["consensus"] = binary_flags.sum(axis=1)

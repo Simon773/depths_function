@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import roc_curve, auc
@@ -13,14 +14,14 @@ def plot_thresholds(scores, title):
 
     # ELBOW plot
     ax1.plot(index, scores_sorted, 'b-o', markersize=4)
-    ax1.set_title("Simplicial Volume : Elbow Method")
+    ax1.set_title("Elbow Method")
     ax1.set_xlabel("Index (sorted)")
     ax1.set_ylabel("Depth")
     ax1.grid(True, alpha=0.3)
 
     # GAP plot
     ax2.scatter(index, scores_sorted, c='red', marker='+', s=60)
-    ax2.set_title("Simplicial Volume : Gap Method")
+    ax2.set_title("Gap Method")
     ax2.set_xlabel("Index (sorted)")
     ax2.set_ylabel("Depth")
     ax2.grid(True, alpha=0.3)
@@ -42,14 +43,14 @@ def plot_thresholds_zoom(scores, title):
 
     # ELBOW plot
     ax1.plot(index, scores_zoom, 'b-o', markersize=4)
-    ax1.set_title("halfspace depth : Elbow method (Zoom 40%)")
+    ax1.set_title("Elbow method (Zoom 40%)")
     ax1.set_xlabel("Index (sorted)")
     ax1.set_ylabel("Depth")
     ax1.grid(True, alpha=0.3)
 
     # GAP plot
     ax2.scatter(index, scores_zoom, c='red', marker='+', s=60)
-    ax2.set_title("halfspace depth : Gap method (Zoom 40%)")
+    ax2.set_title("Gap method (Zoom 40%)")
     ax2.set_xlabel("Index (sorted)")
     ax2.set_ylabel("Depth")
     ax2.grid(True, alpha=0.3)
@@ -102,3 +103,9 @@ def plot_roc_curves(dict_scores, y_true):
     plt.legend(loc="lower right")
     plt.grid(alpha=0.3)
     plt.show()
+
+# print("ok")
+# raw_scores = pd.read_csv("resultats/comparaison_outliers_scores_bruts.csv", sep = ';')
+# plot_thresholds(raw_scores['ODC'], "odc_final")
+# plot_thresholds_zoom(raw_scores['ODC'], "odc_final")
+    
