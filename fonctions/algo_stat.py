@@ -1,45 +1,40 @@
 import numpy as np
-from sklearn.neighbors import NearestNeighbors
-from sklearn.cluster import KMeans, AgglomerativeClustering
-from scipy.spatial.distance import pdist
-
 from pyod.models.abod import ABOD
-from pyod.models.hbos import HBOS
-from pyod.models.lof import LOF
-from pyod.models.hdbscan import HDBSCAN
 from pyod.models.cblof import CBLOF
-from sklearn.model_selection import train_test_split
+from pyod.models.hbos import HBOS
+from pyod.models.hdbscan import HDBSCAN
+from pyod.models.lof import LOF
+from scipy.spatial.distance import pdist
+from sklearn.cluster import AgglomerativeClustering, KMeans
+from sklearn.neighbors import NearestNeighbors
+
+
+def _fit_score(clf, X):
+    """Fit on the full sample and return pyod's decision scores.
+    pyod's convention is already 'higher = more anomalous', so no sign flip
+    here: orientation lives in fonctions/scores.py only."""
+    clf.fit(X)
+    return clf.decision_scores_
 
 
 def calcul_HBOS(X):
-    X_train, X_test = train_test_split(X, random_state=42)
-    clf = HBOS()
-    clf.fit(X_train)
-    return(clf.decision_function(X))
+    return _fit_score(HBOS(), X)
+
 
 def calcul_ABOD(X):
-    clf = ABOD(contamination = 0.2, method = 'fast')
-    clf.fit(X)
-    y_pred = clf.predict(X)
-    return(-clf.decision_scores_)
+    return _fit_score(ABOD(method="fast"), X)
+
 
 def calcul_LOF(X):
-    X_train, X_test = train_test_split(X, random_state=42)
-    clf = LOF()
-    clf.fit(X_train)
-    return(clf.decision_function(X))
+    return _fit_score(LOF(), X)
+
 
 def calcul_DBSCAN(X):
-    X_train, X_test = train_test_split(X, random_state=42)
-    clf = HDBSCAN()
-    clf.fit(X_train)
-    return(clf.decision_function(X))
+    return _fit_score(HDBSCAN(), X)
+
 
 def calcul_CBLOF(X):
-    X_train, X_test = train_test_split(X, random_state=42)
-    clf = CBLOF()
-    clf.fit(X_train)
-    return(clf.decision_function(X))
+    return _fit_score(CBLOF(), X)
 
 
 def calcul_LDOF(X, k=5):
@@ -53,7 +48,7 @@ def calcul_LDOF(X, k=5):
     n = X.shape[0]
     nbrs = NearestNeighbors(n_neighbors=k + 1).fit(X)
     distances, indices = nbrs.kneighbors(X)
-    distances = distances[:, 1:]   # on retire le point lui-même
+    distances = distances[:, 1:]  # on retire le point lui-même
     indices = indices[:, 1:]
 
     ldof_scores = np.zeros(n)
@@ -182,11 +177,11 @@ def calcul_ROCF(X, n_clusters=5):
     Chaque point reçoit le score ROCF de son cluster.
     """
     X = np.asarray(X)
-    clustering = AgglomerativeClustering(n_clusters=n_clusters, linkage='single').fit(X)
+    clustering = AgglomerativeClustering(n_clusters=n_clusters, linkage="single").fit(X)
     labels = clustering.labels_
 
     unique, counts = np.unique(labels, return_counts=True)
-    order = np.argsort(-counts)          # tri décroissant par taille
+    order = np.argsort(-counts)  # tri décroissant par taille
     sorted_sizes = counts[order]
     sorted_labels = unique[order]
     n_c = len(sorted_sizes)
@@ -195,9 +190,11 @@ def calcul_ROCF(X, n_clusters=5):
     for i in range(n_c - 1):
         Ci = sorted_sizes[i]
         Ci1 = sorted_sizes[i + 1]
-        rocf_values[i] = 1 - np.exp(-Ci1 / (Ci ** 2))
+        rocf_values[i] = 1 - np.exp(-Ci1 / (Ci**2))
     if n_c > 1:
-        rocf_values[-1] = rocf_values[-2]  # dernier cluster : même score que l'avant-dernier
+        rocf_values[-1] = rocf_values[
+            -2
+        ]  # dernier cluster : même score que l'avant-dernier
 
     label_to_rocf = {sorted_labels[i]: rocf_values[i] for i in range(n_c)}
     scores = np.array([label_to_rocf[l] for l in labels])
